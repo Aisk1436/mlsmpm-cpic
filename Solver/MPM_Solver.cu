@@ -66,7 +66,7 @@ namespace Mpm
                 rotated[0] *= pa.inv_dx;
                 if (rotated[0] < 0.02 || 1.02 < rotated[0]) continue;
                 auto negative = rotated[1] < 0;
-#if __CUDA_ARCH__ >= 600
+
                 bool isSet;
                 do
                 {
@@ -83,7 +83,6 @@ namespace Mpm
                     }
                     if (isSet) grid[idx].mutex = false;
                 } while (!isSet);
-#endif
             }
     }
 
@@ -290,11 +289,10 @@ namespace Mpm
                             utils::narrow_cast<Real>(j)) - fx) * pa.dx;
                     auto grid_v_add =
                             (p.v * pa.p_mass + p.affine % dpos) * weight;
-#if __CUDA_ARCH__ >= 600
+
                     atomicAdd(&(grid[idx].v[0]), grid_v_add[0]);
                     atomicAdd(&(grid[idx].v[1]), grid_v_add[1]);
                     atomicAdd(&grid[idx].m, weight * pa.p_mass);
-#endif
                 }
                 else
                 {
@@ -391,12 +389,6 @@ namespace Mpm
                 apply_impulse(rigid_bodies[rigid_id],
                         dv * -pa.p_mass, p.x);
         }
-
-        /*    // debug
-        if (!(0.0 < p.x[0] && p.x[0] < 1.0
-            && 0.0 < p.x[1] && p.x[1] < 1.0)) {
-            int a = 0;
-        }*/
     }
 
     __global__ void rigid_pre_advection_kernel
@@ -758,9 +750,7 @@ namespace Mpm
         if (rb.bt == BodyType::circle) return;
         auto delta_w = (grid_pos - rb.x).cross(impulse) / rb.density;
 
-#if __CUDA_ARCH__ >= 600
         atomicAdd(&rb.w, delta_w);
-#endif
 
     }
 
